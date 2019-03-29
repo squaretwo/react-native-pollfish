@@ -8,10 +8,10 @@ NSString *const kPollfishSurveyNotAvailable = @"surveyNotAvailable";
 NSString *const kPollfishSurveyOpened = @"surveyOpened";
 NSString *const kPollfishSurveyClosed = @"surveyClosed";
 
-bool isInitialized;
-bool isInitializing;
-
-@implementation RNPollfish
+@implementation RNPollfish {
+    bool isInitializing;
+    bool isInitialized;
+}
 
 @synthesize bridge = _bridge;
 
@@ -80,11 +80,12 @@ RCT_EXPORT_METHOD(destroy)
     [Pollfish destroy];
 }
 
-RCT_EXPORT_METHOD(surveyAvailable)
+RCT_REMAP_METHOD(surveyAvailable, surveyAvailableWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
+    BOOL isPresent = [Pollfish isPollfishPresent];
     NSLog(@"isPollfishPresent");
-    NSLog([Pollfish isPollfishPresent]?@"YES":@"NO");
-    [Pollfish isPollfishPresent];
+    NSLog(isPresent ? @"YES" : @"NO");
+    resolve([NSNumber numberWithBool:isPresent]);
 }
 
 #pragma mark delgate events

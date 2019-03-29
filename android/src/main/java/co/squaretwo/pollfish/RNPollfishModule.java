@@ -15,6 +15,7 @@ import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.Promise;
 
 
 import com.pollfish.interfaces.PollfishClosedListener;
@@ -138,8 +139,12 @@ public class RNPollfishModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void surveyAvailable() {
-        PollFish.isPollfishPresent();
+    public void surveyAvailable(Promise promise) {
+        try {
+            promise.resolve(PollFish.isPollfishPresent());
+        } catch(Exception e) {
+            promise.reject("Failed to determine if Pollfish survey is present", e);
+        }
     }
 
     private void sendEvent(String eventName, @Nullable WritableMap params) {
