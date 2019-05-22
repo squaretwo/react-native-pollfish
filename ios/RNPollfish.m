@@ -9,7 +9,6 @@ NSString *const kPollfishSurveyOpened = @"surveyOpened";
 NSString *const kPollfishSurveyClosed = @"surveyClosed";
 
 @implementation RNPollfish {
-    bool isInitializing;
     bool isInitialized;
 }
 
@@ -48,18 +47,14 @@ RCT_EXPORT_METHOD(initialize :(NSString *)apiKey :(BOOL *)debugMode  :(BOOL *)cu
 
     NSLog(@"initialize Pollfish");
 
-    [Pollfish initAtPosition: PollFishPositionMiddleRight
-                 withPadding: 0
-             andDeveloperKey: apiKey
-               andDebuggable: debugMode
-               andCustomMode: customMode
-              andRequestUUID: userId];
+    PollfishParams *pollfishParams =  [PollfishParams initWith:^(PollfishParams *pollfishParams) {
+        pollfishParams.releaseMode = !debugMode;
+        pollfishParams.offerwallMode = false;
+        pollfishParams.rewardMode = customMode;
+        pollfishParams.requestUUID = userId;
+    }];
     
-    if (customMode) {
-        isInitializing = YES;
-        [Pollfish hide];
-        isInitializing = NO;
-    }
+    [Pollfish initWithAPIKey:apiKey andParams:pollfishParams];
 }
 
 RCT_EXPORT_METHOD(show)
@@ -135,11 +130,6 @@ RCT_REMAP_METHOD(surveyAvailable, surveyAvailableWithResolver:(RCTPromiseResolve
 - (void)pollfishClosed
 {
     NSLog(@"Pollfish is closed!");
-    
-    NSDictionary *body = @{
-        @"wasClosedByInitialize": [NSNumber numberWithBool:isInitializing]
-    };
-
-    [self sendEventWithName:kPollfishSurveyClosed body:body];
+    [self sendEventWithName:kPollfishSurveyClosed body:nil];
 }
 @end

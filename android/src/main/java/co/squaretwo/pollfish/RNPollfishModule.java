@@ -18,11 +18,12 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Promise;
 
 
+import com.pollfish.classes.SurveyInfo;
 import com.pollfish.interfaces.PollfishClosedListener;
 import com.pollfish.interfaces.PollfishOpenedListener;
-import com.pollfish.interfaces.PollfishSurveyCompletedListener;
+import com.pollfish.interfaces.PollfishCompletedSurveyListener;
 import com.pollfish.interfaces.PollfishSurveyNotAvailableListener;
-import com.pollfish.interfaces.PollfishSurveyReceivedListener;
+import com.pollfish.interfaces.PollfishReceivedSurveyListener;
 import com.pollfish.interfaces.PollfishUserNotEligibleListener;
 import com.pollfish.main.PollFish;
 import com.pollfish.main.PollFish.ParamsBuilder;
@@ -34,15 +35,11 @@ public class RNPollfishModule extends ReactContextBaseJavaModule {
     private static final String TAG = "RNPollfish";
     private EventManager eventManager;
 
-    private ReactApplicationContext mContext;
     private Intent mSurveyIntent;
     private Callback requestSurveyCallback;
 
-    private boolean isInitializing = false;
-
     public RNPollfishModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        mContext = reactContext;
         this.eventManager = new EventManager(reactContext);
     }
 
@@ -64,15 +61,17 @@ public class RNPollfishModule extends ReactContextBaseJavaModule {
             PollFish.initWith( getCurrentActivity(),
                 new ParamsBuilder(apiKey)
                     .releaseMode(!debugMode) // Due to inconsitency with iOS, we negate whatever is passed in for production
-                    .customMode(autoMode) // Set true to avoid auto-popup behavior
+                    .rewardMode(autoMode) // Set true to avoid auto-popup behavior
                     .requestUUID(uuid) // Unique user identifier, passed back in the callback
-                    .pollfishSurveyReceivedListener(new PollfishSurveyReceivedListener() {
+                    .pollfishReceivedSurveyListener(new PollfishReceivedSurveyListener() {
                         @Override
-                        public void onPollfishSurveyReceived(final boolean playfulSurvey, final int surveyPrice) {
-                            WritableMap map = new WritableNativeMap();
-                            map.putBoolean("playfulSurvey", playfulSurvey);
-                            map.putInt("surveyPrice", surveyPrice);
-                            eventManager.send("surveyReceived", map);
+                        public void onPollfishSurveyReceived(@Nullable SurveyInfo surveyInfo) {
+                            if (surveyInfo != null) {
+                                WritableMap map = new WritableNativeMap();
+                                map.putBoolean("playfulSurvey", surveyInfo.getSurveyClass().equals("Pollfish/Playful"));
+                                map.putInt("surveyPrice", surveyInfo.getRewardValue());
+                                eventManager.send("surveyReceived", map);
+                            }
                         }
                     })
                     .pollfishSurveyNotAvailableListener(new PollfishSurveyNotAvailableListener() {
@@ -81,13 +80,15 @@ public class RNPollfishModule extends ReactContextBaseJavaModule {
                             eventManager.send("surveyNotAvailable");
                         }
                     })
-                    .pollfishSurveyCompletedListener(new PollfishSurveyCompletedListener() {
+                    .pollfishCompletedSurveyListener(new PollfishCompletedSurveyListener() {
                         @Override
-                        public void onPollfishSurveyCompleted(final boolean playfulSurvey, final int surveyPrice) {
-                            WritableMap map = new WritableNativeMap();
-                            map.putBoolean("playfulSurvey", playfulSurvey);
-                            map.putInt("surveyPrice", surveyPrice);
-                            eventManager.send("surveyCompleted", map);
+                        public void onPollfishSurveyCompleted(@Nullable SurveyInfo surveyInfo) {
+                            if (surveyInfo != null) {
+                                WritableMap map = new WritableNativeMap();
+                                map.putBoolean("playfulSurvey", surveyInfo.getSurveyClass().equals("Pollfish/Playful"));
+                                map.putInt("surveyPrice", surveyInfo.getRewardValue());
+                                eventManager.send("surveyCompleted", map);
+                            }
                         }
                     })
                     .pollfishUserNotEligibleListener(new PollfishUserNotEligibleListener() {
@@ -105,17 +106,10 @@ public class RNPollfishModule extends ReactContextBaseJavaModule {
                     .pollfishClosedListener(new PollfishClosedListener() {
                         @Override
                         public void onPollfishClosed() {
-                            WritableMap map = new WritableNativeMap();
-                            map.putBoolean("wasClosedByInitialize", isInitializing);
-                            eventManager.send("surveyClosed", map);
+                            eventManager.send("surveyClosed");
                         }
                     })
                     .build());
-            if (autoMode) {
-                isInitializing = true;
-                PollFish.hide();
-                isInitializing = false;
-            }
           }
         });
 
