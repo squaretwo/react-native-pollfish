@@ -36,6 +36,5 @@ repositories {
 
 dependencies {
     compile 'com.facebook.react:react-native:0.20.+'
-    compile 'com.pollfish:pollfish:+:googleplayRelease@aar'
+    compile 'com.pollfish:pollfish:5.0.2:googleplayRelease@aar'
 }
-  
