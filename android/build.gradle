@@ -28,13 +28,11 @@ android {
     }
 }
 
-
 repositories {
     jcenter()
 }
 
-
 dependencies {
     compile 'com.facebook.react:react-native:0.20.+'
-    compile 'com.pollfish:pollfish:5.0.2:googleplayRelease@aar'
+    compile 'com.pollfish:pollfish:5.5.1:googleplayRelease@aar'
 }
